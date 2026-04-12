@@ -8,4 +8,5 @@ tr_TR:
       description: "Platforma erken katılan kullanıcılara verilen rozet."
     verified:
       name: "Doğrulanmış"
-      description: "Topluluk tarafından doğrulanan kullanıcılara verilen rozet."
+      description: "Kurumsal veya izin verilen bir e-posta adresiyle kayıt olduğunuz için verilir."
+      long_description: "Bu rozet, e-posta adresini kurumsal bir alan adı ile doğrulayan kullanıcılara sistem tarafından otomatik olarak atanır. <br><br><b>Not:</b> E-posta adresinin farklı bir alan adına değiştirilmesi durumunda bu rozet otomatik olarak geri alınacaktır."

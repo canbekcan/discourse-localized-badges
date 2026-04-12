@@ -30,6 +30,14 @@ after_initialize do
           defined?(super) ? super : object.description
         end
       end
+
+      def long_description
+        if object.long_description.to_s.start_with?('badges.')
+          I18n.t(object.long_description)
+        else
+          defined?(super) ? super : object.long_description
+        end
+      end
     end
 
     require_dependency 'badge_serializer'

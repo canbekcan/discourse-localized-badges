@@ -9,4 +9,5 @@ en:
         description: "A badge awarded to users who joined the platform early."
       verified:
         name: "Verified"
-        description: "A badge awarded to users who have been verified by the community."
+        description: "Awarded to users who have registered with a corporate or authorized email address."
+        long_description: "This badge is automatically assigned by the system to users who verify their email address with a corporate domain. <br><br><b>Note:</b> If the email address is changed to a different domain, this badge will be automatically revoked."
