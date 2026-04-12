@@ -2,4 +2,7 @@ tr_TR:
   badges:
     first_author:
       name: "İlk Yazar"
-      description: "İlk konunuzu yayınladığınız için verilir."
+      description: "Makalenin ilk yazarına verilen rozet."
+    early_adapter:
+      name: "Erken Katılımcı"
+      description: "Platforma erken katılan kullanıcılara verilen rozet."

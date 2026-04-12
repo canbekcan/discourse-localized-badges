@@ -3,4 +3,7 @@ en:
     badges:
       first_author:
         name: "First Author"
-        description: "Awarded for publishing your first topic."
+        description: "A badge awarded to the first author of the article."
+      early_adapter:
+        name: "Early Adapter"
+        description: "A badge awarded to users who joined the platform early."
