@@ -1,7 +1,7 @@
 # name: discourse-localized-badges
 # about: Custom badges localisation for Discourse
 # version: 0.1
-# authors: Can Bekcan
+# authors: Senior Engineer
 # url: https://github.com/canbekcan/discourse-localized-badges
 
 # frozen_string_literal: true
@@ -13,13 +13,22 @@ after_initialize do
 
   reloadable_patch do
     
+    # 1. API YAMASI: Badge Serializer (Güvenli Yama)
     module ::LocalizedBadgeSerializerPatch
       def name
-        object.name.to_s.start_with?('badges.') ? I18n.t(object.name) : super
+        if object.name.to_s.start_with?('badges.')
+          I18n.t(object.name)
+        else
+          defined?(super) ? super : object.name
+        end
       end
 
       def description
-        object.description.to_s.start_with?('badges.') ? I18n.t(object.description) : super
+        if object.description.to_s.start_with?('badges.')
+          I18n.t(object.description)
+        else
+          defined?(super) ? super : object.description
+        end
       end
     end
 
@@ -28,20 +37,14 @@ after_initialize do
       prepend ::LocalizedBadgeSerializerPatch
     end
 
-    module ::LocalizedUserBadgeSerializerPatch
-      def badge_name
-        object.badge.name.to_s.start_with?('badges.') ? I18n.t(object.badge.name) : super
-      end
-    end
-
-    require_dependency 'user_badge_serializer'
-    class ::UserBadgeSerializer
-      prepend ::LocalizedUserBadgeSerializerPatch
-    end
-
+    # 2. MODEL YAMASI: Backend ve E-postalar için (Güvenli Yama)
     module ::LocalizedBadgeModelPatch
       def display_name
-        name.to_s.start_with?('badges.') ? I18n.t(name) : super
+        if name.to_s.start_with?('badges.')
+          I18n.t(name)
+        else
+          defined?(super) ? super : name
+        end
       end
     end
 
