@@ -6,3 +6,6 @@ tr_TR:
     early_adapter:
       name: "Erken Katılımcı"
       description: "Platforma erken katılan kullanıcılara verilen rozet."
+    verified:
+      name: "Doğrulanmış"
+      description: "Topluluk tarafından doğrulanan kullanıcılara verilen rozet."

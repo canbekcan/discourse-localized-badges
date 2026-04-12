@@ -6,3 +6,6 @@ en:
     early_adapter:
       name: "Early Adapter"
       description: "A badge awarded to users who joined the platform early."
+    verified:
+      name: "Verified"
+      description: "A badge awarded to users who have been verified by the community."

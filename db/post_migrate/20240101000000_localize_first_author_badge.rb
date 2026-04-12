@@ -20,7 +20,7 @@ class LocalizeFirstAuthorBadge < ActiveRecord::Migration[7.0]
     if badge
       badge.update_columns(
         name: 'First Author',
-        description: 'Awarded for publishing your first topic.'
+        description: 'A badge awarded to the first author of the article.'
       )
     end
   end
