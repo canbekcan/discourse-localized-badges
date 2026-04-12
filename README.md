@@ -1,0 +1,1 @@
+It is for Discourse plugin to add localized badge names and descriptions.

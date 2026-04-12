@@ -1,0 +1,6 @@
+tr:
+  js:
+    badges:
+      first_author:
+        name: "İlk Yazar"
+        description: "İlk konunuzu yayınladığınız için verilir."
