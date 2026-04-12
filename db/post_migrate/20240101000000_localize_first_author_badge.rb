@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class LocalizeFirstAuthorBadge < ActiveRecord::Migration[7.0]
   def up
     # Rozeti bul ve isim/açıklama alanlarını I18n anahtarlarıyla güncelle

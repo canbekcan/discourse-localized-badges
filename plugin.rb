@@ -1,13 +1,8 @@
-# name: discourse-localized-badges
-# about: Custom badges localisation for Discourse
-# version: 0.1
-# authors: Senior Engineer
-# url: https://github.com/canbekcan/discourse-localized-badges.git
+# frozen_string_literal: true
 
 enabled_site_setting :localized_badges_enabled
 
 after_initialize do
-  # Bu blok, uygulama ayağa kalktığında çalışır.
-  # Rozet isimleri 'badges.first_author.name' formatında olduğunda 
-  # Discourse otomatik olarak I18n sistemine bakar.
+  # Discourse, about.json ve locales dosyalarını 
+  # otomatik olarak çözümleyecektir.
 end
