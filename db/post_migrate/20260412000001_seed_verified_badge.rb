@@ -37,6 +37,7 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
       description: 'badges.verified.description',
       long_description: 'badges.verified.long_description',
       badge_type_id: 3,          # 1: Altın, 2: Gümüş, 3: Bronz. (Doğrulama rozetleri genelde bronz olur, isterseniz değiştirebilirsiniz)
+      badge_grouping_id: 1,      # Rozet grubu
       query: sql_query,
       trigger: 0,                # 0 = Update Daily (Sorgu her gece veya kullanıcı profil güncellediğinde çalışır)
       auto_revoke: true,         # KRİTİK: Kullanıcı emailini farklı bir domaine değiştirirse rozet geri alınır.
