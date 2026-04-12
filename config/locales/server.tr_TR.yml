@@ -3,8 +3,8 @@ tr_TR:
     first_author:
       name: "İlk Yazar"
       description: "Makalenin ilk yazarına verilen rozet."
-    early_adapter:
-      name: "Erken Katılımcı"
+    early_adopter:
+      name: "Erken Benimseyen"
       description: "Platforma erken katılan kullanıcılara verilen rozet."
     verified:
       name: "Doğrulanmış"

@@ -4,8 +4,8 @@ en:
       first_author:
         name: "First Author"
         description: "A badge awarded to the first author of the article."
-      early_adapter:
-        name: "Early Adapter"
+      early_adopter:
+        name: "Early Adopter"
         description: "A badge awarded to users who joined the platform early."
       verified:
         name: "Verified"
