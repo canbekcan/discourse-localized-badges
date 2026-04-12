@@ -1,7 +1,7 @@
 # name: discourse-localized-badges
 # about: Custom badges localisation for Discourse
 # version: 0.1
-# authors: Senior Engineer
+# authors: Can Bekcan
 # url: https://github.com/canbekcan/discourse-localized-badges
 
 # frozen_string_literal: true
