@@ -4,6 +4,9 @@ tr_TR:
       research_fields:
         name: "Araştırma Alanları"
         description: "Akademik ve araştırma odaklı grup üyeliklerine göre atanan rozetler."
+      research_levels:
+        name: "Araştırma Düzeyleri"
+        description: "Akademik ve araştırma odaklı grup üyeliklerine göre atanan rozetler."
     badges:
       first_author:
         name: "İlk Yazar"

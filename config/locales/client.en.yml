@@ -4,6 +4,9 @@ en:
       research_fields:
         name: "Research Fields"
         description: "Badges awarded based on academic and research-focused group memberships."
+      resarch_levels:
+        name: "Research Levels"
+        description: "Badges awarded based on academic and research-focused group memberships."
     badges:
       first_author:
         name: "First Author"
