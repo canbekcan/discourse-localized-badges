@@ -1,4 +1,8 @@
 en:
+  badge_groupings:
+    research_fields:
+      name: "Research Fields"
+      description: "Badges awarded based on academic and research-focused group memberships."
   badges:
     first_author:
       name: "First Author"
@@ -10,3 +14,11 @@ en:
       name: "Verified"
       description: "Awarded to users who have registered with a corporate or authorized email address."
       long_description: "This badge is automatically assigned by the system to users who verify their email address with a corporate domain. <br><br><b>Note:</b> If the email address is changed to a different domain, this badge will be automatically revoked."
+    social_scientist:
+      name: "Social Scientist"
+      description: "Awarded for joining the Social Sciences community."
+      long_description: "This badge is automatically assigned by the system every night to members who join the <b>Social Science</b> group on our platform. <br><br>If you leave the group, the badge will be automatically revoked."
+    scientist:
+      name: "Scientist"
+      description: "Awarded for joining the Science community."
+      long_description: "This badge is automatically assigned by the system to members who join the <b>Science</b> group on our platform. <br><br>If you leave the group, the badge will be automatically revoked."

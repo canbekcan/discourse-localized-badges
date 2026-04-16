@@ -1,6 +1,6 @@
 # name: discourse-localized-badges
 # about: Custom badges localisation for Discourse
-# version: 1.0
+# version: 1.1
 # authors: Can Bekcan
 # url: https://github.com/canbekcan/discourse-localized-badges
 
@@ -13,7 +13,7 @@ after_initialize do
 
   reloadable_patch do
     
-    # 1. API YAMASI: Badge Serializer (Güvenli Yama)
+    # 1. Badge Serializer (Güvenli Yama)
     module ::LocalizedBadgeSerializerPatch
       def name
         if object.name.to_s.start_with?('badges.')
@@ -45,7 +45,7 @@ after_initialize do
       prepend ::LocalizedBadgeSerializerPatch
     end
 
-    # 2. MODEL YAMASI: Backend ve E-postalar için (Güvenli Yama)
+    # 2. Backend ve E-postalar için (Güvenli Yama)
     module ::LocalizedBadgeModelPatch
       def display_name
         if name.to_s.start_with?('badges.')
@@ -59,6 +59,22 @@ after_initialize do
     require_dependency 'badge'
     class ::Badge
       prepend ::LocalizedBadgeModelPatch
+    end
+
+    # 3. Badge Grouping (Rozet Grupları) Çevirisi
+    module ::LocalizedBadgeGroupingSerializerPatch
+      def name
+        if object.name.to_s.start_with?('badge_groupings.')
+          I18n.t(object.name)
+        else
+          defined?(super) ? super : object.name
+        end
+      end
+    end
+
+    require_dependency 'badge_grouping_serializer'
+    class ::BadgeGroupingSerializer
+      prepend ::LocalizedBadgeGroupingSerializerPatch
     end
 
   end
