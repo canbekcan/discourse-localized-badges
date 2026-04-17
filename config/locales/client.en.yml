@@ -26,3 +26,7 @@ en:
         name: "Scientist"
         description: "Awarded for joining the Science community."
         long_description: "This badge is automatically assigned by the system to members who join the <b>Science</b> group on our platform. <br><br>If you leave the group, the badge will be automatically revoked."
+      founding_member:
+        name: "Founding Member"
+        description: "Awarded to the elite first members who laid the foundation of the platform."
+        long_description: "This exclusive badge is awarded to the elite members who were part of our community's founding stage and helped lay the foundation of the platform."

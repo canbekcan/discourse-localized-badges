@@ -25,3 +25,7 @@ tr_TR:
       name: "Bilim İnsanı"
       description: "Bilim topluluğuna katıldığınız için verilir."
       long_description: "Bu rozet, platformumuzda <b>Science</b> grubuna katılan üyelere sistem tarafından otomatik olarak atanır. <br><br>Gruptan ayrılmanız durumunda rozet otomatik olarak geri alınacaktır."
+    founding_member:
+        name: "Kurucu Üye"
+        description: "Platformun temellerini atan ilk elit üyelere verilir."
+        long_description: "Bu rozet, topluluğumuzun kuruluş aşamasında yer alan ve platformun temellerini atan elit üyelere özel olarak verilmiştir."
