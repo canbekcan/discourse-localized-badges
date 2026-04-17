@@ -2,9 +2,11 @@
 
 class SeedFoundingMemberBadge < ActiveRecord::Migration[7.0]
   def up
-    # Eski 'early_adopter' rozetini bul ve 'founding_member' olarak güncelle
-    badge = Badge.find_by(name: 'badges.early_adopter.name') 
-    badge ||= Badge.find_or_initialize_by(name: 'badges.founding_member.name')
+    # BÜTÜN OLASI ESKİ İSİMLERİ SORGULA (Kurşun Geçirmez Arama)
+    badge = Badge.find_by(name: 'badges.early_adopter.name') ||
+            Badge.find_by(name: 'Early Adopter') ||
+            Badge.find_by(name: 'Early Adapter') ||
+            Badge.find_or_initialize_by(name: 'badges.founding_member.name')
 
     sql_query = <<~SQL
       SELECT id AS user_id, CURRENT_TIMESTAMP AS granted_at
