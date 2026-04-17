@@ -16,7 +16,7 @@ class SeedResearchFieldsBadges < ActiveRecord::Migration[7.0]
       FROM group_users gu
       JOIN groups g ON g.id = gu.group_id
         -- DİKKAT: Buradaki 'SocialScience' grubun sistem (URL) adıdır.
-      WHERE g.name = 'SocialScience' 
+      WHERE g.name = 'socialscience' 
         AND (:backfill OR gu.user_id IN (:user_ids))
     SQL
 
@@ -39,7 +39,7 @@ class SeedResearchFieldsBadges < ActiveRecord::Migration[7.0]
       FROM group_users gu
       JOIN groups g ON g.id = gu.group_id
       -- DİKKAT: Buradaki 'Science' grubun sistem (URL) adıdır.
-      WHERE g.name = 'Science'
+      WHERE g.name = 'science'
         AND (:backfill OR gu.user_id IN (:user_ids))
     SQL
 
