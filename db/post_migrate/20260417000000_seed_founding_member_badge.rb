@@ -11,7 +11,7 @@ class SeedFoundingMemberBadge < ActiveRecord::Migration[7.0]
       FROM users
       WHERE id > 0 AND active = true
       ORDER BY created_at ASC
-      LIMIT 200
+      LIMIT 150
     SQL
 
     badge.update!(
