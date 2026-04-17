@@ -7,7 +7,6 @@ class SeedResearchFieldsBadges < ActiveRecord::Migration[7.0]
     grouping.update!(
       description: 'badge_groupings.research_fields.description',
       position: BadgeGrouping.maximum(:position).to_i + 1, # Listede en sona ekler
-      system: false
     )
 
     # 2. SOCIAL SCIENTIST ROZETİ (Gümüş)
