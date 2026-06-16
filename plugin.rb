@@ -38,12 +38,12 @@ after_initialize do
     if target_badge && badge_id == target_badge.id
       user = User.find_by(id: user_id)
       
+      # GÜVENLİK YAMASI: Admin veya Moderatörlerin yetkisinin sıfırlanmasını engelle
+      next if user && user.staff? 
+      
       # Kullanıcının mevcut yetkisi TL1 veya üzerindeyse onu TL0'a (Ziyaretçi seviyesi) geri çekiyoruz
       if user && user.trust_level > TrustLevel[0]
         user.change_trust_level!(TrustLevel[0])
-        
-        # Kullanıcının üzerindeki güven seviyesi kilidini NULL yaparak kaldırıyoruz.
-        # Bu sayede sistemin standart mekanizmaları bozulmaz.
         user.update_column(:manual_locked_trust_level, nil)
         
         Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) e-postasini degistirdigi ve rozetini kaybettigi icin TL0'a dusuruldu ve kilidi kaldirildi.")
