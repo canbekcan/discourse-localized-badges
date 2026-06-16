@@ -11,9 +11,52 @@ enabled_site_setting :localized_badges_enabled
 after_initialize do
   next unless SiteSetting.localized_badges_enabled
 
+  # ====================================================================
+  # OTOMASYON 1: "Verified" rozeti alanları otomatik olarak TL1 yap ve kilitle
+  # ====================================================================
+  DiscourseEvent.on(:user_badge_granted) do |badge_id, user_id|
+    target_badge = Badge.find_by(name: 'badges.verified.name') || Badge.find_by(name: 'Verified')
+    
+    if target_badge && badge_id == target_badge.id
+      user = User.find_by(id: user_id)
+      
+      if user && user.trust_level < TrustLevel[1]
+        user.change_trust_level!(TrustLevel[1])
+        user.update_column(:manual_locked_trust_level, 1)
+        
+        Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) Verified rozeti aldigi icin TL1 yapildi ve kilitlendi.")
+      end
+    end
+  end
+
+  # ====================================================================
+  # OTOMASYON 2: "Verified" rozeti geri alınanları TL0'a DÜŞÜR ve kilidi aç
+  # ====================================================================
+  DiscourseEvent.on(:user_badge_removed) do |badge_id, user_id|
+    target_badge = Badge.find_by(name: 'badges.verified.name') || Badge.find_by(name: 'Verified')
+    
+    if target_badge && badge_id == target_badge.id
+      user = User.find_by(id: user_id)
+      
+      # Kullanıcının mevcut yetkisi TL1 veya üzerindeyse onu TL0'a (Ziyaretçi seviyesi) geri çekiyoruz
+      if user && user.trust_level > TrustLevel[0]
+        user.change_trust_level!(TrustLevel[0])
+        
+        # Kullanıcının üzerindeki güven seviyesi kilidini NULL yaparak kaldırıyoruz.
+        # Bu sayede sistemin standart mekanizmaları bozulmaz.
+        user.update_column(:manual_locked_trust_level, nil)
+        
+        Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) e-postasini degistirdigi ve rozetini kaybettigi icin TL0'a dusuruldu ve kilidi kaldirildi.")
+      end
+    end
+  end
+
+  # ====================================================================
+  # YAMALAR (PATCHES): Çeviri ve Serileştirme İşlemleri
+  # ====================================================================
   reloadable_patch do
     
-    # 1. Badge Serializer (Güvenli Yama)
+    # 1. Badge Serializer
     module ::LocalizedBadgeSerializerPatch
       def name
         if object.name.to_s.start_with?('badges.')
@@ -45,7 +88,7 @@ after_initialize do
       prepend ::LocalizedBadgeSerializerPatch
     end
 
-    # 2. Backend ve E-postalar için (Güvenli Yama)
+    # 2. Badge Model
     module ::LocalizedBadgeModelPatch
       def display_name
         if name.to_s.start_with?('badges.')
@@ -61,7 +104,7 @@ after_initialize do
       prepend ::LocalizedBadgeModelPatch
     end
 
-    # 3. Badge Grouping (Rozet Grupları) Çevirisi
+    # 3. Badge Grouping
     module ::LocalizedBadgeGroupingSerializerPatch
       def name
         if object.name.to_s.start_with?('badge_groupings.')
