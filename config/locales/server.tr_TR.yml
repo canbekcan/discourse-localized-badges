@@ -1,4 +1,8 @@
 tr_TR:
+  site_settings:
+    localized_badges_enabled: "Yerelleştirilmiş Rozetleri (Localized Badges) Etkinleştir"
+    verified_academic_domains: "Doğrulanmış Akademik Domainler"
+    verified_academic_domains_description: "Doğrulanmış (Verified) rozetini otomatik alacak kurumların e-posta uzantılarını buraya liste olarak girin (örnek: edu, edu.tr)."
   badge_groupings:
     research_fields:
       name: "Araştırma Alanları"
