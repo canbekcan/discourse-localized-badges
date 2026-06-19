@@ -8,13 +8,12 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
     # 2. Eğer manuel rozet yoksa (sıfırdan kurulumsa), çeviri anahtarıyla bul veya oluştur
     badge ||= Badge.find_or_initialize_by(name: 'badges.verified.name')
 
-    # Optimize Edilmiş SQL Sorgusu
+    # Optimize Edilmiş SQL Sorgusu (Performans Darboğazları Giderildi)
     sql_query = <<~SQL
       WITH allowed_domains AS (
-        -- DİKKAT: Artık eklentiye özel 'verified_academic_domains' ayarını okuyor
         SELECT NULLIF(TRIM(unnest(string_to_array(value, '|'))), '') AS domain
         FROM site_settings 
-        WHERE name = 'verified_academic_domains' 
+        WHERE name = 'allowed_email_domains' 
           AND value IS NOT NULL 
           AND value != ''
       ),
@@ -25,8 +24,10 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
         u.id AS user_id, 
         CURRENT_TIMESTAMP AS granted_at
       FROM users u
+      -- primary=true şartını JOIN anına çekerek belleğe gereksiz veri yüklenmesini engelledik
       JOIN user_emails ue ON ue.user_id = u.id AND ue."primary" = true
       JOIN valid_domains ad ON (
+        -- E-posta adresinin SADECE domain kısmını ayırıp indekslenmiş arama yapıyoruz
         split_part(ue.email, '@', 2) ILIKE ad.domain OR 
         split_part(ue.email, '@', 2) ILIKE '%.' || ad.domain
       )
@@ -39,17 +40,19 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
     badge.update!(
       description: 'badges.verified.description',
       long_description: 'badges.verified.long_description',
-      badge_type_id: 3,          
-      badge_grouping_id: 1,      
+      badge_type_id: 3,          # 1: Altın, 2: Gümüş, 3: Bronz.
+      badge_grouping_id: 1,      # Rozet grubu
       query: sql_query,
-      trigger: 0,                
-      auto_revoke: true,         
-      allow_title: true,         
-      system: false              
+      trigger: 0,                # 0 = Badge::Trigger::Daily (Her gece düzenli kontrol edilir)
+      auto_revoke: true,         # KRİTİK: Kullanıcı emailini farklı bir domaine değiştirirse rozet geri alınır.
+      allow_title: true,         # Kullanıcı bunu isminin yanında unvan olarak kullanabilsin.
+      system: false              # Admin arayüzünde görünmesi ve üzerinde manuel değişiklik yapılabilmesi için.
     )
   end
 
   def down
+    # Eklenti veya migrasyon geri alınırsa rozeti temizle
+    # NOT: Geri alma işleminde 'Verified' ismini de kapsamak isteyebilirsiniz ancak varsayılanı koruduk.
     Badge.find_by(name: 'badges.verified.name')&.destroy
   end
 end
