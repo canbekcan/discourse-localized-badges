@@ -3,5 +3,6 @@ plugins:
     default: true
     client: true
   verified_academic_domains:
-    default: 'edu|edu.tr|ac.uk'
+    default: 'bekcan.com|canbekcan.com|edu|edu.tr|ac.uk'
     type: list
+    list_type: compact
