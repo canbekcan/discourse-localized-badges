@@ -42,7 +42,7 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
       badge_type_id: 3,          
       badge_grouping_id: 1,      
       query: sql_query,
-      trigger: 0,                
+      trigger: 4,                
       auto_revoke: true,         
       allow_title: true,         
       system: false              
