@@ -2,8 +2,8 @@
 
 class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
   def up
-    # 1. Önce admin panelinden elle açılmış olan "Verified" rozetini bul
-    badge = Badge.find_by(name: 'Verified')
+    # 1. Önce hem ham ismiyle hem de eski anahtarla veritabanında var mı diye kontrol et
+    badge = Badge.find_by(name: 'Verified') || Badge.find_by(name: 'badges.verified.name')
 
     # 2. Eğer manuel rozet yoksa (sıfırdan kurulumsa), çeviri anahtarıyla bul veya oluştur
     badge ||= Badge.find_or_initialize_by(name: 'badges.verified.name')

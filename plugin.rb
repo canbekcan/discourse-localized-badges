@@ -1,6 +1,6 @@
 # name: discourse-localized-badges
 # about: Custom badges localisation for Discourse
-# version: 1.1
+# version: 1.2
 # authors: Can Bekcan
 # url: https://github.com/canbekcan/discourse-localized-badges
 
@@ -20,6 +20,10 @@ after_initialize do
     if target_badge && badge_id == target_badge.id
       user = User.find_by(id: user_id)
       
+      # GÜVENLİK YAMASI 1: Eğer kullanıcı Admin veya Moderatör ise, seviyesini TL1'e kilitleme.
+      # Yöneticiler her zaman TL4 veya özel yetkide kalmalıdır.
+      next if user && user.staff?
+      
       if user && user.trust_level < TrustLevel[1]
         user.change_trust_level!(TrustLevel[1])
         user.update_column(:manual_locked_trust_level, 1)
@@ -38,15 +42,15 @@ after_initialize do
     if target_badge && badge_id == target_badge.id
       user = User.find_by(id: user_id)
       
-      # GÜVENLİK YAMASI: Admin veya Moderatörlerin yetkisinin sıfırlanmasını engelle
+      # GÜVENLİK YAMASI 2: Admin veya Moderatörlerin yetkisinin sıfırlanmasını kesinlikle engelle
       next if user && user.staff? 
       
-      # Kullanıcının mevcut yetkisi TL1 veya üzerindeyse onu TL0'a (Ziyaretçi seviyesi) geri çekiyoruz
       if user && user.trust_level > TrustLevel[0]
-        user.change_trust_level!(TrustLevel[0])
+        # Önce kilidi kaldırıyoruz (nil yapıyoruz) ki change_trust_level! metodu çalışabilsin
         user.update_column(:manual_locked_trust_level, nil)
+        user.change_trust_level!(TrustLevel[0])
         
-        Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) e-postasini degistirdigi ve rozetini kaybettigi icin TL0'a dusuruldu ve kilidi kaldirildi.")
+        Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) e-postasini degistirdigi ve rozetini kaybettigi icin kilidi kaldirildi ve TL0'a dusuruldu.")
       end
     end
   end
