@@ -1,6 +1,6 @@
 # name: discourse-localized-badges
 # about: Custom badges localisation for Discourse
-# version: 1.2
+# version: 1.3
 # authors: Can Bekcan
 # url: https://github.com/canbekcan/discourse-localized-badges
 
@@ -20,8 +20,7 @@ after_initialize do
     if target_badge && badge_id == target_badge.id
       user = User.find_by(id: user_id)
       
-      # GÜVENLİK YAMASI 1: Eğer kullanıcı Admin veya Moderatör ise, seviyesini TL1'e kilitleme.
-      # Yöneticiler her zaman TL4 veya özel yetkide kalmalıdır.
+      # GÜVENLİK YAMASI 1: Eğer kullanıcı Admin veya Moderatör ise muaf tut
       next if user && user.staff?
       
       if user && user.trust_level < TrustLevel[1]
@@ -42,7 +41,7 @@ after_initialize do
     if target_badge && badge_id == target_badge.id
       user = User.find_by(id: user_id)
       
-      # GÜVENLİK YAMASI 2: Admin veya Moderatörlerin yetkisinin sıfırlanmasını kesinlikle engelle
+      # GÜVENLİK YAMASI 2: Admin veya Moderatörleri muaf tut
       next if user && user.staff? 
       
       if user && user.trust_level > TrustLevel[0]
@@ -56,7 +55,7 @@ after_initialize do
   end
 
   # ====================================================================
-  # YAMALAR (PATCHES): Çeviri ve Serileştirme İşlemleri
+  # YAMALAR (PATCHES): Çeviri, Serileştirme ve ANLIK E-POSTA KONTROLÜ
   # ====================================================================
   reloadable_patch do
     
@@ -122,6 +121,57 @@ after_initialize do
     require_dependency 'badge_grouping_serializer'
     class ::BadgeGroupingSerializer
       prepend ::LocalizedBadgeGroupingSerializerPatch
+    end
+
+    # ====================================================================
+    # 4. YENİ: ANINDA E-POSTA DEĞİŞİMİ YAKALAYICI (INSTANT REVOKE)
+    # ====================================================================
+    module ::LocalizedUserEmailPatch
+      extend ActiveSupport::Concern
+
+      included do
+        after_commit :check_verified_academic_badge, on: [:create, :update]
+      end
+
+      def check_verified_academic_badge
+        # Sadece "birincil (primary)" e-posta değişikliklerini yakala
+        return unless self.primary?
+
+        user = self.user
+        return if user.nil? || user.staff?
+
+        target_badge = Badge.find_by(name: 'Verified')
+        
+        # Eğer kullanıcının zaten Doğrulanmış rozeti YOKSA işlemi bitir
+        return unless target_badge && user.user_badges.exists?(badge_id: target_badge.id)
+
+        # Yeni yapılan e-postanın domainini al
+        domain = self.email.to_s.split('@').last.to_s.downcase
+        allowed_domains = SiteSetting.verified_academic_domains.to_s.split('|').reject(&:blank?).map(&:downcase)
+        
+        # Yeni domain, izin verilenler listesinde var mı?
+        is_valid = allowed_domains.any? do |ad|
+          domain == ad || domain.end_with?(".#{ad}")
+        end
+
+        # EĞER GEÇERSİZSE (Örn: gmail.com yapıldıysa):
+        unless is_valid
+          user_badge = UserBadge.find_by(user_id: user.id, badge_id: target_badge.id)
+          if user_badge
+            # 1. Rozeti anında geri al
+            BadgeGranter.revoke(user_badge)
+            
+            # Not: Rozet geri alındığı an, yukarıdaki OTOMASYON 2 zincirleme olarak
+            # tetiklenecek ve kullanıcıyı anında TL0 seviyesine düşürecektir.
+            Rails.logger.info("DevOps [discourse-localized-badges]: #{user.username} e-postasini #{self.email} yapti. Kurumsal olmadigi icin rozeti ANINDA iptal edildi.")
+          end
+        end
+      end
+    end
+
+    require_dependency 'user_email'
+    class ::UserEmail
+      include ::LocalizedUserEmailPatch
     end
 
   end
