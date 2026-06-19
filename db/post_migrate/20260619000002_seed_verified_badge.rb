@@ -2,16 +2,12 @@
 
 class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
   def up
-    # 1. Önce hem ham ismiyle hem de eski anahtarla veritabanında var mı diye kontrol et
     badge = Badge.find_by(name: 'Verified') || Badge.find_by(name: 'badges.verified.name')
+    badge ||= Badge.new(name: 'Verified')
 
-    # 2. Eğer manuel rozet yoksa (sıfırdan kurulumsa), çeviri anahtarıyla bul veya oluştur
-    badge ||= Badge.find_or_initialize_by(name: 'badges.verified.name')
-
-    # Optimize Edilmiş SQL Sorgusu
+    # AKADEMİK GÜVENLİK FİLTRESİ EKLELENMİŞ SQL
     sql_query = <<~SQL
       WITH allowed_domains AS (
-        -- DİKKAT: Artık eklentiye özel 'verified_academic_domains' ayarını okuyor
         SELECT NULLIF(TRIM(unnest(string_to_array(value, '|'))), '') AS domain
         FROM site_settings 
         WHERE name = 'verified_academic_domains' 
@@ -27,7 +23,9 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
       FROM users u
       JOIN user_emails ue ON ue.user_id = u.id AND ue."primary" = true
       JOIN valid_domains ad ON (
+        -- DURUM 1: Domain birebir eşleşiyorsa (Örn: bekcan.com)
         split_part(ue.email, '@', 2) ILIKE ad.domain OR 
+        -- DURUM 2: Domain girdiğimiz uzantıyla NOKTALI olarak bitiyorsa (Örn: .edu.tr ile biten universite.edu.tr)
         split_part(ue.email, '@', 2) ILIKE '%.' || ad.domain
       )
       WHERE u.active = true
@@ -35,8 +33,8 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
         AND (:backfill OR u.id IN (:user_ids))
     SQL
 
-    # Rozet özelliklerini ve SQL sorgusunu veritabanına kaydet
     badge.update!(
+      name: 'Verified',
       description: 'badges.verified.description',
       long_description: 'badges.verified.long_description',
       badge_type_id: 3,          
@@ -50,6 +48,7 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
   end
 
   def down
+    Badge.find_by(name: 'Verified')&.destroy
     Badge.find_by(name: 'badges.verified.name')&.destroy
   end
 end
