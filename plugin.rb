@@ -35,7 +35,7 @@ after_initialize do
   # ====================================================================
   # OTOMASYON 2: "Verified" rozeti geri alınanları TL0'a DÜŞÜR ve kilidi aç
   # ====================================================================
-  DiscourseEvent.on(:user_badge_removed) do |badge_id, user_id|
+  DiscourseEvent.on(:user_badge_revoked) do |badge_id, user_id|
     target_badge = Badge.find_by(name: 'badges.verified.name') || Badge.find_by(name: 'Verified')
     
     if target_badge && badge_id == target_badge.id
