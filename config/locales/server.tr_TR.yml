@@ -6,7 +6,7 @@ tr_TR:
     localized_badges_gold_sponsor_domains: "Altın Sponsor Domainleri (örnek: mit.edu)"
     localized_badges_silver_sponsor_domains: "Gümüş Sponsor Domainleri"
     localized_badges_bronze_sponsor_domains: "Bronz Sponsor Domainleri"
-    localized_badges_partner_domains: "Doğrulanmış (Verified) Partner Domainleri
+    localized_badges_partner_domains: "Doğrulanmış (Verified) Partner Domainleri"
   badge_groupings:
     research_fields:
       name: "Araştırma Alanları"
