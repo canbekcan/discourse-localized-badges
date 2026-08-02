@@ -3,6 +3,10 @@ en:
     localized_badges_enabled: "Enable Localized Badges plugin"
     verified_academic_domains: "Verified Academic Domains"
     verified_academic_domains_description: "Enter the email extensions of institutions that will automatically receive the Verified badge (e.g. edu, edu.tr)."
+    localized_badges_gold_sponsor_domains: "Gold Sponsor Domains (e.g. mit.edu)"
+    localized_badges_silver_sponsor_domains: "Silver Sponsor Domains"
+    localized_badges_bronze_sponsor_domains: "Bronze Sponsor Domains"
+    localized_badges_partner_domains: "Verified Partner Domains"
   badge_groupings:
     research_fields:
       name: "Research Fields"

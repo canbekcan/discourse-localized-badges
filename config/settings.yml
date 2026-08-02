@@ -6,3 +6,19 @@ plugins:
     default: 'bekcan.com|canbekcan.com|edu|edu.tr|ac.uk'
     type: list
     list_type: compact
+  localized_badges_gold_sponsor_domains:
+    default: ''
+    type: list
+    list_type: compact
+  localized_badges_silver_sponsor_domains:
+    default: ''
+    type: list
+    list_type: compact
+  localized_badges_bronze_sponsor_domains:
+    default: ''
+    type: list
+    list_type: compact
+  localized_badges_partner_domains:
+    default: ''
+    type: list
+    list_type: compact

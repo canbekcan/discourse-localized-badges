@@ -10,6 +10,18 @@ enabled_site_setting :localized_badges_enabled
 
 after_initialize do
   next unless SiteSetting.localized_badges_enabled
+  # Servis dosyasının Discourse boot aşamasında yüklenmesini sağlıyoruz
+  require_relative 'lib/localized_badges/services/assign_sponsor_badges'
+
+  # Kullanıcı ilk kez onaylanıp kayıt olduğunda
+  on(:user_created) do |user|
+    LocalizedBadges::Services::AssignSponsorBadges.new(user).call
+  end
+
+  # Kullanıcı e-posta adresini güncellediğinde
+  on(:user_emails_changed) do |user|
+    LocalizedBadges::Services::AssignSponsorBadges.new(user).call
+  end
 
   # ====================================================================
   # OTOMASYON 1: "Verified" rozeti alanları otomatik olarak TL1 yap ve kilitle
