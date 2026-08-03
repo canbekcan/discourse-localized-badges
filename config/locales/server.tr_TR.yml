@@ -37,3 +37,19 @@ tr_TR:
         name: "Kurucu Üye"
         description: "Platformun temellerini atan ilk elit üyelere verilir."
         long_description: "Bu rozet, topluluğumuzun kuruluş aşamasında yer alan ve platformun temellerini atan elit üyelere özel olarak verilmiştir."
+    gold_sponsor:
+      name: "Altın Sponsor"
+      description: "BEKCAN Enstitüsü'ne en üst düzeyde yapısal destek sağlayan kurumlara verilir."
+      long_description: "Bu rozet, BEKCAN Enstitüsü ekosistemine en yüksek düzeyde katkı ve destek sağlayan Altın Sponsor kurumların e-posta alan adlarıyla kayıt olan üyelere otomatik olarak atanır. <br><br><b>Not:</b> E-posta adresinin sponsor olmayan farklı bir alan adına değiştirilmesi durumunda bu rozet sistem tarafından otomatik olarak geri alınacaktır."
+    silver_sponsor:
+      name: "Gümüş Sponsor"
+      description: "BEKCAN Enstitüsü'ne önemli düzeyde destek sağlayan kurumlara verilir."
+      long_description: "Bu rozet, bağımsız akademik araştırmalara ve BEKCAN Enstitüsü'ne değerli katkılar sunan Gümüş Sponsor kurumların e-posta alan adlarıyla kayıt olan üyelere otomatik olarak atanır. <br><br><b>Not:</b> E-posta adresinin sponsor olmayan farklı bir alan adına değiştirilmesi durumunda bu rozet sistem tarafından otomatik olarak geri alınacaktır."
+    bronze_sponsor:
+      name: "Bronz Sponsor"
+      description: "BEKCAN Enstitüsü'nü temel düzeyde destekleyen kurumlara verilir."
+      long_description: "Bu rozet, BEKCAN Enstitüsü'ne destek veren Bronz Sponsor kurumların e-posta alan adlarıyla kayıt olan üyelere otomatik olarak atanır. <br><br><b>Not:</b> E-posta adresinin sponsor olmayan farklı bir alan adına değiştirilmesi durumunda bu rozet sistem tarafından otomatik olarak geri alınacaktır."
+    verified_partner:
+      name: "İş Ortağı"
+      description: "BEKCAN Enstitüsü'nün doğrulanmış akademik ve kurumsal iş ortaklarına verilir."
+      long_description: "Bu rozet, BEKCAN Enstitüsü ile doğrulanmış iş ortaklığı veya akademik işbirliği yürüten kurumlara mensup üyelere sistem tarafından otomatik olarak atanır. <br><br><b>Not:</b> E-posta adresinin doğrulanmamış farklı bir alan adına değiştirilmesi durumunda bu rozet sistem tarafından otomatik olarak geri alınacaktır."
