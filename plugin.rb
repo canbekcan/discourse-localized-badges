@@ -11,6 +11,7 @@ enabled_site_setting :localized_badges_enabled
 after_initialize do
   next unless SiteSetting.localized_badges_enabled
   require_relative 'lib/localized_badges/services/assign_sponsor_badges'
+  require_relative 'app/jobs/regular/assign_retroactive_sponsor_badges'
 
   # 1. AYAR DEĞİŞİMİ KANCASI: Yeni domain eklendiğinde mevcut kullanıcıları tara
   on(:site_setting_changed) do |setting_name, old_value, new_value|
