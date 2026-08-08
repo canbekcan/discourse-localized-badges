@@ -10,15 +10,36 @@ enabled_site_setting :localized_badges_enabled
 
 after_initialize do
   next unless SiteSetting.localized_badges_enabled
-  # Servis dosyasının Discourse boot aşamasında yüklenmesini sağlıyoruz
   require_relative 'lib/localized_badges/services/assign_sponsor_badges'
 
-  # Kullanıcı ilk kez onaylanıp kayıt olduğunda
-  on(:user_created) do |user|
+  # 1. AYAR DEĞİŞİMİ KANCASI: Yeni domain eklendiğinde mevcut kullanıcıları tara
+  on(:site_setting_changed) do |setting_name, old_value, new_value|
+    sponsor_settings = %i[
+      localized_badges_gold_sponsor_domains
+      localized_badges_silver_sponsor_domains
+      localized_badges_bronze_sponsor_domains
+      localized_badges_partner_domains
+    ]
+
+    if sponsor_settings.include?(setting_name)
+      old_domains = old_value.to_s.split('|').map(&:downcase)
+      new_domains = new_value.to_s.split('|').map(&:downcase)
+
+      added_domains = new_domains - old_domains
+
+      added_domains.each do |domain|
+        # Zeitwerk, Jobs::AssignRetroactiveSponsorBadges sınıfını app/jobs klasöründen otomatik yükler
+        Jobs.enqueue(:assign_retroactive_sponsor_badges, domain: domain)
+      end
+    end
+  end
+
+  # 2. KULLANICI AKTİVASYON KANCASI
+  on(:user_activated) do |user|
     LocalizedBadges::Services::AssignSponsorBadges.new(user).call
   end
 
-  # Kullanıcı e-posta adresini güncellediğinde
+  # 3. E-POSTA GÜNCELLEME KANCASI
   on(:user_emails_changed) do |user|
     LocalizedBadges::Services::AssignSponsorBadges.new(user).call
   end

@@ -1,0 +1,33 @@
+.
+├── LICENSE
+├── README.md
+├── about.json
+├── app
+│   └── jobs
+│       └── regular
+│           └── assign_retroactive_sponsor_badges.rb
+├── config
+│   ├── locales
+│   │   ├── client.en.yml
+│   │   ├── client.tr_TR.yml
+│   │   ├── server.en.yml
+│   │   └── server.tr_TR.yml
+│   └── settings.yml
+├── db
+│   ├── archives
+│   │   ├── 20240101000000_localize_first_author_badge.rb
+│   │   ├── 20260412000000_seed_early_adopter_badge.rb
+│   │   ├── 20260417000000_seed_research_fields_badges.rb
+│   │   ├── 20260418000000_seed_founding_member_badge.rb
+│   │   ├── 20260616000001_seed_verified_badge.rb
+│   │   └── 20260619000002_seed_verified_badge.rb
+│   └── post_migrate
+│       └── 20260802000001_seed_sponsor_badges.rb
+├── discourse-localized-badges.txt
+├── lib
+│   └── localized_badges
+│       └── services
+│           └── assign_sponsor_badges.rb
+└── plugin.rb
+
+12 directories, 19 files
