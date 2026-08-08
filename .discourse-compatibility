@@ -1,0 +1,7 @@
+# Discourse Compatibility Ledger
+# Eklentinin sorunsuz çalıştığı bilinen en güncel versiyonlar.
+# Gelecekte eski bir Discourse sürümü için eklentiyi dondurmak (pinning) istersen, 
+# 'HEAD' yerine o anki güvenli Git commit hash'ini (örneğin: a1b2c3d) girmelisin.
+
+3.1: HEAD
+3.2.0.beta2-dev: HEAD

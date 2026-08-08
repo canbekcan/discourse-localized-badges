@@ -47,7 +47,7 @@ after_initialize do
   end
 
   # ====================================================================
-  # OTOMASYON 1: "Verified" rozeti alanları otomatik olarak TL1 yap ve kilitle
+  # OTOMASYON 1: "Verified" rozeti alanları otomatik olarak TL1 yap
   # ====================================================================
   DiscourseEvent.on(:user_badge_granted) do |badge_id, user_id|
     target_badge = Badge.find_by(name: 'badges.verified.name') || Badge.find_by(name: 'Verified')
@@ -55,20 +55,18 @@ after_initialize do
     if target_badge && badge_id == target_badge.id
       user = User.find_by(id: user_id)
       
-      # GÜVENLİK YAMASI 1: Eğer kullanıcı Admin veya Moderatör ise muaf tut
       next if user && user.staff?
       
       if user && user.trust_level < TrustLevel[1]
         user.change_trust_level!(TrustLevel[1])
-        user.update_column(:manual_locked_trust_level, 1)
-        
-        Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) Verified rozeti aldigi icin TL1 yapildi ve kilitlendi.")
+        # manual_locked_trust_level iptal edildi; kullanıcı doğal olarak TL2/TL3 olabilir.
+        Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) Verified rozeti aldigi icin TL1'e terfi ettirildi.")
       end
     end
   end
 
   # ====================================================================
-  # OTOMASYON 2: "Verified" rozeti geri alınanları TL0'a DÜŞÜR ve kilidi aç
+  # OTOMASYON 2: "Verified" rozeti geri alınanları TL0'a DÜŞÜR
   # ====================================================================
   DiscourseEvent.on(:user_badge_revoked) do |badge_id, user_id|
     target_badge = Badge.find_by(name: 'badges.verified.name') || Badge.find_by(name: 'Verified')
@@ -76,15 +74,14 @@ after_initialize do
     if target_badge && badge_id == target_badge.id
       user = User.find_by(id: user_id)
       
-      # GÜVENLİK YAMASI 2: Admin veya Moderatörleri muaf tut
       next if user && user.staff? 
       
       if user && user.trust_level > TrustLevel[0]
-        # Önce kilidi kaldırıyoruz (nil yapıyoruz) ki change_trust_level! metodu çalışabilsin
-        user.update_column(:manual_locked_trust_level, nil)
+        # Eski kilitleri temizle (geriye dönük güvenlik için) ve seviyeyi düşür
+        user.update_column(:manual_locked_trust_level, nil) if user.manual_locked_trust_level.present?
         user.change_trust_level!(TrustLevel[0])
         
-        Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) e-postasini degistirdigi ve rozetini kaybettigi icin kilidi kaldirildi ve TL0'a dusuruldu.")
+        Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) e-postasini degistirdigi ve rozetini kaybettigi icin TL0'a dusuruldu.")
       end
     end
   end
