@@ -13,7 +13,7 @@ after_initialize do
   require_relative 'lib/localized_badges/services/assign_sponsor_badges'
   require_relative 'app/jobs/regular/assign_retroactive_sponsor_badges'
 
-  # 1. AYAR DEĞİŞİMİ KANCASI: Yeni domain eklendiğinde mevcut kullanıcıları tara
+  # 1. AYAR DEĞİŞİMİ KANCASI: Yeni domain eklendiğinde veya SİLİNDİĞİNDE mevcut kullanıcıları tara
   on(:site_setting_changed) do |setting_name, old_value, new_value|
     sponsor_settings = %i[
       localized_badges_gold_sponsor_domains
@@ -27,9 +27,10 @@ after_initialize do
       new_domains = new_value.to_s.split('|').map(&:downcase)
 
       added_domains = new_domains - old_domains
-
-      added_domains.each do |domain|
-        # Zeitwerk, Jobs::AssignRetroactiveSponsorBadges sınıfını app/jobs klasöründen otomatik yükler
+      removed_domains = old_domains - new_domains
+      
+      # Hem listeye yeni eklenen hem de listeden çıkarılan domainleri Sidekiq'e gönder
+      (added_domains + removed_domains).uniq.each do |domain|
         Jobs.enqueue(:assign_retroactive_sponsor_badges, domain: domain)
       end
     end

@@ -20,9 +20,12 @@
 │   │   ├── 20260417000000_seed_research_fields_badges.rb
 │   │   ├── 20260418000000_seed_founding_member_badge.rb
 │   │   ├── 20260616000001_seed_verified_badge.rb
-│   │   └── 20260619000002_seed_verified_badge.rb
+│   │   ├── 20260619000002_seed_verified_badge.rb
+│   │   ├── 20260808000000_seed_founding_member_badge.rb
+│   │   ├── 20260808000000_seed_research_fields_badges.rb
+│   │   ├── 20260808000000_seed_sponsor_badges.rb
+│   │   └── 20260808000000_seed_verified_badge.rb
 │   └── post_migrate
-│       └── 20260802000001_seed_sponsor_badges.rb
 ├── discourse-localized-badges.txt
 ├── lib
 │   └── localized_badges
@@ -30,4 +33,4 @@
 │           └── assign_sponsor_badges.rb
 └── plugin.rb
 
-12 directories, 19 files
+12 directories, 22 files
