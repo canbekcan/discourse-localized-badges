@@ -7,6 +7,8 @@ tr_TR:
     localized_badges_silver_sponsor_domains: "Gümüş Sponsor Domainleri"
     localized_badges_bronze_sponsor_domains: "Bronz Sponsor Domainleri"
     localized_badges_partner_domains: "Doğrulanmış (Verified) Partner Domainleri"
+    publisher_email_domains: "İzin verilen yayıncı e-posta alan adları"
+    publisher_target_groups: "Yayıncıların otomatik atanacağı grupları seçin"
   badge_groupings:
     research_fields:
       name: "Araştırma Alanları"
@@ -53,3 +55,6 @@ tr_TR:
       name: "İş Ortağı"
       description: "BEKCAN Enstitüsü'nün doğrulanmış akademik ve kurumsal iş ortaklarına verilir."
       long_description: "Bu rozet, BEKCAN Enstitüsü ile doğrulanmış iş ortaklığı veya akademik işbirliği yürüten kurumlara mensup üyelere sistem tarafından otomatik olarak atanır. <br><br><b>Not:</b> E-posta adresinin doğrulanmamış farklı bir alan adına değiştirilmesi durumunda bu rozet sistem tarafından otomatik olarak geri alınacaktır."
+    verified_publisher:
+      name: "Onaylı Yayıncı"
+      description: "Onaylı yayıncı alan adları ile kayıt olan kullanıcılara verilir."

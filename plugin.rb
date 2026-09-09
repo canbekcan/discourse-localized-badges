@@ -11,6 +11,7 @@ enabled_site_setting :localized_badges_enabled
 after_initialize do
   next unless SiteSetting.localized_badges_enabled
   require_relative 'lib/localized_badges/services/assign_sponsor_badges'
+  require_relative 'lib/localized_badges/services/assign_publisher_role'
   require_relative 'app/jobs/regular/assign_retroactive_sponsor_badges'
 
   # 1. AYAR DEĞİŞİMİ KANCASI: Yeni domain eklendiğinde veya SİLİNDİĞİNDE mevcut kullanıcıları tara
@@ -39,11 +40,13 @@ after_initialize do
   # 2. KULLANICI AKTİVASYON KANCASI
   on(:user_activated) do |user|
     LocalizedBadges::Services::AssignSponsorBadges.new(user).call
+    LocalizedBadges::Services::AssignPublisherRole.new(user).call
   end
 
   # 3. E-POSTA GÜNCELLEME KANCASI
   on(:user_emails_changed) do |user|
     LocalizedBadges::Services::AssignSponsorBadges.new(user).call
+    LocalizedBadges::Services::AssignPublisherRole.new(user).call
   end
 
   # ====================================================================
@@ -172,32 +175,58 @@ after_initialize do
         user = self.user
         return if user.nil? || user.staff?
 
+        # Yeni yapılan e-postanın domainini al (Her iki kontrol için de ortak kullanılacak)
+        domain = self.email.to_s.split('@').last.to_s.downcase
+
+        # ====================================================================
+        # 1. VERIFIED (ONAYLI AKADEMİSYEN) ROZETİ KONTROLÜ
+        # ====================================================================
         target_badge = Badge.find_by(name: 'Verified')
         
-        # Eğer kullanıcının zaten Doğrulanmış rozeti YOKSA işlemi bitir
-        return unless target_badge && user.user_badges.exists?(badge_id: target_badge.id)
+        if target_badge && user.user_badges.exists?(badge_id: target_badge.id)
+          allowed_domains = SiteSetting.verified_academic_domains.to_s.split('|').reject(&:blank?).map(&:downcase)
+          
+          is_valid = allowed_domains.any? do |ad|
+            domain == ad || domain.end_with?(".#{ad}")
+          end
 
-        # Yeni yapılan e-postanın domainini al
-        domain = self.email.to_s.split('@').last.to_s.downcase
-        allowed_domains = SiteSetting.verified_academic_domains.to_s.split('|').reject(&:blank?).map(&:downcase)
-        
-        # Yeni domain, izin verilenler listesinde var mı?
-        is_valid = allowed_domains.any? do |ad|
-          domain == ad || domain.end_with?(".#{ad}")
-        end
-
-        # EĞER GEÇERSİZSE (Örn: gmail.com yapıldıysa):
-        unless is_valid
-          user_badge = UserBadge.find_by(user_id: user.id, badge_id: target_badge.id)
-          if user_badge
-            # 1. Rozeti anında geri al
-            BadgeGranter.revoke(user_badge)
-            
-            # Not: Rozet geri alındığı an, yukarıdaki OTOMASYON 2 zincirleme olarak
-            # tetiklenecek ve kullanıcıyı anında TL0 seviyesine düşürecektir.
-            Rails.logger.info("DevOps [discourse-localized-badges]: #{user.username} e-postasini #{self.email} yapti. Kurumsal olmadigi icin rozeti ANINDA iptal edildi.")
+          unless is_valid
+            user_badge = UserBadge.find_by(user_id: user.id, badge_id: target_badge.id)
+            if user_badge
+              BadgeGranter.revoke(user_badge)
+              Rails.logger.info("DevOps [discourse-localized-badges]: #{user.username} e-postasini #{self.email} yapti. Kurumsal olmadigi icin rozeti ANINDA iptal edildi.")
+            end
           end
         end
+
+        # ====================================================================
+        # 2. YAYINCI ROZETİ VE GRUP KONTROLÜ
+        # ====================================================================
+        publisher_badge = Badge.find_by(name: 'badges.verified_publisher.name') || Badge.find_by(name: 'Verified Publisher')
+        
+        if publisher_badge && user.user_badges.exists?(badge_id: publisher_badge.id)
+          pub_domains = SiteSetting.publisher_email_domains.to_s.split('|').reject(&:blank?).map(&:downcase)
+          pub_groups = SiteSetting.publisher_target_groups.to_s.split('|').reject(&:blank?)
+          
+          is_pub_valid = pub_domains.any? do |pd| 
+            domain == pd || domain.end_with?(".#{pd}") 
+          end
+
+          unless is_pub_valid
+            # 1. Rozeti geri al
+            pub_user_badge = UserBadge.find_by(user_id: user.id, badge_id: publisher_badge.id)
+            BadgeGranter.revoke(pub_user_badge) if pub_user_badge
+            
+            # 2. Kullanıcıyı yayıncı gruplarından çıkar
+            pub_groups.each do |group_id|
+              group = Group.find_by(id: group_id)
+              group.remove(user) if group && group.users.include?(user)
+            end
+            
+            Rails.logger.info("DevOps [discourse-localized-badges]: #{user.username} e-postasini degistirdi. Yayinici gruplarindan ve rozetinden ANINDA cikarildi.")
+          end
+        end
+
       end
     end
 

@@ -7,6 +7,8 @@ en:
     localized_badges_silver_sponsor_domains: "Silver Sponsor Domains"
     localized_badges_bronze_sponsor_domains: "Bronze Sponsor Domains"
     localized_badges_partner_domains: "Verified Partner Domains"
+    publisher_email_domains: "Allowed publisher email domains"
+    publisher_target_groups: "Select target groups for publishers"
   badge_groupings:
     research_fields:
       name: "Research Fields"
@@ -53,3 +55,6 @@ en:
       name: "Verified Partner"
       description: "Awarded to verified academic and corporate partners of the BEKCAN Institute."
       long_description: "This badge is assigned to members belonging to organizations that collaborate with the BEKCAN Institute as verified business or academic partners. <br><br><b>Note:</b> If the email address is changed to an unverified domain, this badge will be automatically revoked."
+    verified_publisher:
+      name: "Verified Publisher"
+      description: "Awarded to users registered with verified publisher domains."

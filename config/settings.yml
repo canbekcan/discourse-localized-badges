@@ -22,3 +22,10 @@ plugins:
     default: ''
     type: list
     list_type: compact
+  publisher_email_domains:
+    default: ''
+    type: list
+    list_type: compact
+  publisher_target_groups:
+    default: ''
+    type: group_list
