@@ -1,0 +1,13 @@
+name: Plugin Tests
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  build:
+    # Discourse'un resmi eklenti test altyapısını otomatik olarak çağırır
+    uses: discourse/discourse/.github/workflows/plugin-ci.yml@main
