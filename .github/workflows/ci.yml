@@ -9,5 +9,5 @@ on:
 
 jobs:
   build:
-    # Discourse'un resmi eklenti test altyapısını otomatik olarak çağırır
-    uses: discourse/discourse/.github/workflows/plugin-ci.yml@main
+    # Güncellenmiş, doğru Discourse test şablonu yolu:
+    uses: discourse/.github/.github/workflows/plugin.yml@main
