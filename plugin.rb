@@ -13,9 +13,12 @@ after_initialize do
   require_relative 'lib/localized_badges/services/assign_sponsor_badges'
   require_relative 'lib/localized_badges/services/assign_publisher_role'
   require_relative 'app/jobs/regular/assign_retroactive_sponsor_badges'
+  require_relative 'app/jobs/regular/evaluate_retroactive_publisher_badges'
 
   # 1. AYAR DEĞİŞİMİ KANCASI: Yeni domain eklendiğinde veya SİLİNDİĞİNDE mevcut kullanıcıları tara
   on(:site_setting_changed) do |setting_name, old_value, new_value|
+    
+    # Sponsor Rozetleri Taraması
     sponsor_settings = %i[
       localized_badges_gold_sponsor_domains
       localized_badges_silver_sponsor_domains
@@ -30,9 +33,21 @@ after_initialize do
       added_domains = new_domains - old_domains
       removed_domains = old_domains - new_domains
       
-      # Hem listeye yeni eklenen hem de listeden çıkarılan domainleri Sidekiq'e gönder
       (added_domains + removed_domains).uniq.each do |domain|
         Jobs.enqueue(:assign_retroactive_sponsor_badges, domain: domain)
+      end
+    end
+
+    # Yayıncı Rozetleri Taraması (Yeni Eklendi)
+    if setting_name == :publisher_email_domains
+      old_domains = old_value.to_s.split('|').map(&:downcase)
+      new_domains = new_value.to_s.split('|').map(&:downcase)
+
+      added_domains = new_domains - old_domains
+      removed_domains = old_domains - new_domains
+      
+      (added_domains + removed_domains).uniq.each do |domain|
+        Jobs.enqueue(:evaluate_retroactive_publisher_badges, domain: domain)
       end
     end
   end
@@ -62,7 +77,6 @@ after_initialize do
       
       if user && user.trust_level < TrustLevel[1]
         user.change_trust_level!(TrustLevel[1])
-        # manual_locked_trust_level iptal edildi; kullanıcı doğal olarak TL2/TL3 olabilir.
         Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) Verified rozeti aldigi icin TL1'e terfi ettirildi.")
       end
     end
@@ -80,10 +94,8 @@ after_initialize do
       next if user && user.staff? 
       
       if user && user.trust_level > TrustLevel[0]
-        # Eski kilitleri temizle (geriye dönük güvenlik için) ve seviyeyi düşür
         user.update_column(:manual_locked_trust_level, nil) if user.manual_locked_trust_level.present?
         user.change_trust_level!(TrustLevel[0])
-        
         Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) e-postasini degistirdigi ve rozetini kaybettigi icin TL0'a dusuruldu.")
       end
     end
@@ -94,7 +106,6 @@ after_initialize do
   # ====================================================================
   reloadable_patch do
     
-    # 1. Badge Serializer
     module ::LocalizedBadgeSerializerPatch
       def name
         if object.name.to_s.start_with?('badges.')
@@ -103,7 +114,6 @@ after_initialize do
           defined?(super) ? super : object.name
         end
       end
-
       def description
         if object.description.to_s.start_with?('badges.')
           I18n.t(object.description)
@@ -111,7 +121,6 @@ after_initialize do
           defined?(super) ? super : object.description
         end
       end
-
       def long_description
         if object.long_description.to_s.start_with?('badges.')
           I18n.t(object.long_description)
@@ -126,7 +135,6 @@ after_initialize do
       prepend ::LocalizedBadgeSerializerPatch
     end
 
-    # 2. Badge Model
     module ::LocalizedBadgeModelPatch
       def display_name
         if name.to_s.start_with?('badges.')
@@ -142,7 +150,6 @@ after_initialize do
       prepend ::LocalizedBadgeModelPatch
     end
 
-    # 3. Badge Grouping
     module ::LocalizedBadgeGroupingSerializerPatch
       def name
         if object.name.to_s.start_with?('badge_groupings.')
@@ -159,7 +166,7 @@ after_initialize do
     end
 
     # ====================================================================
-    # 4. YENİ: ANINDA E-POSTA DEĞİŞİMİ YAKALAYICI (INSTANT REVOKE)
+    # 4. ANINDA E-POSTA DEĞİŞİMİ YAKALAYICI (INSTANT REVOKE)
     # ====================================================================
     module ::LocalizedUserEmailPatch
       extend ActiveSupport::Concern
@@ -169,18 +176,14 @@ after_initialize do
       end
 
       def check_verified_academic_badge
-        # Sadece "birincil (primary)" e-posta değişikliklerini yakala
         return unless self.primary?
 
         user = self.user
         return if user.nil? || user.staff?
 
-        # Yeni yapılan e-postanın domainini al (Her iki kontrol için de ortak kullanılacak)
         domain = self.email.to_s.split('@').last.to_s.downcase
 
-        # ====================================================================
-        # 1. VERIFIED (ONAYLI AKADEMİSYEN) ROZETİ KONTROLÜ
-        # ====================================================================
+        # VERIFIED ROZETİ KONTROLÜ (ORİJİNAL)
         target_badge = Badge.find_by(name: 'Verified')
         
         if target_badge && user.user_badges.exists?(badge_id: target_badge.id)
@@ -199,9 +202,7 @@ after_initialize do
           end
         end
 
-        # ====================================================================
-        # 2. YAYINCI ROZETİ VE GRUP KONTROLÜ
-        # ====================================================================
+        # YAYINCI ROZETİ VE GRUP KONTROLÜ
         publisher_badge = Badge.find_by(name: 'badges.verified_publisher.name') || Badge.find_by(name: 'Verified Publisher')
         
         if publisher_badge && user.user_badges.exists?(badge_id: publisher_badge.id)
@@ -213,13 +214,11 @@ after_initialize do
           end
 
           unless is_pub_valid
-            # 1. Rozeti geri al
             pub_user_badge = UserBadge.find_by(user_id: user.id, badge_id: publisher_badge.id)
             BadgeGranter.revoke(pub_user_badge) if pub_user_badge
             
-            # 2. Kullanıcıyı yayıncı gruplarından çıkar
-            pub_groups.each do |group_id|
-              group = Group.find_by(id: group_id)
+            pub_groups.each do |group_name_or_id|
+              group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
               group.remove(user) if group && group.users.include?(user)
             end
             
