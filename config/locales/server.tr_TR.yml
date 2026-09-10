@@ -8,11 +8,8 @@ tr_TR:
     localized_badges_bronze_sponsor_domains: "Bronz Sponsor Domainleri"
     localized_badges_partner_domains: "Doğrulanmış (Verified) Partner Domainleri"
     localized_badges_publisher_domains: "İzin verilen yayıncı e-posta alan adları"
-    publisher_target_groups: "Yayıncıların otomatik atanacağı grupları seçin"
-  admin_settings:
-    localized_badges_publisher_domains: "Yayıncı Domainleri (Verified Publisher)"
     localized_badges_publisher_domains_help: "Bu domainlerle kayıt olan kullanıcılara otomatik olarak Verified Publisher rozeti verilir. Aşağıdaki hedef grup ayarıyla birlikte çalışır."
-    publisher_target_groups: "Yayıncı Hedef Grupları"
+    publisher_target_groups: "Yayıncıların otomatik atanacağı grupları seçin"
     publisher_target_groups_help: "Yukarıdaki domain doğrulamasını geçen yayıncı kullanıcıların otomatik olarak ekleneceği ve domainden çıktıklarında çıkarılacağı hedef gruplar."
   badge_groupings:
     research_fields:
