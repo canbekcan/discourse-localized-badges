@@ -11,7 +11,7 @@ enabled_site_setting :localized_badges_enabled
 after_initialize do
   next unless SiteSetting.localized_badges_enabled
   require_relative 'lib/localized_badges/services/assign_sponsor_badges'
-  require_relative 'lib/localized_badges/services/assign_publisher_role'
+  require_relative 'lib/localized_badges/services/assign_publisher_badges'
   require_relative 'app/jobs/regular/assign_retroactive_sponsor_badges'
   require_relative 'app/jobs/regular/assign_retroactive_publisher_badges'
 
