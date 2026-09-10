@@ -21,7 +21,7 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
         u.id AS user_id, 
         CURRENT_TIMESTAMP AS granted_at
       FROM users u
-      JOIN user_emails ue ON ue.user_id = u.id AND ue."primary" = true
+      JOIN user_emails ue ON ue.user_id = u.id AND ue."primary" = true AND ue.confirmed_at IS NOT NULL
       JOIN valid_domains ad ON (
         -- DURUM 1: Domain birebir eşleşiyorsa (Örn: bekcan.com)
         split_part(ue.email, '@', 2) ILIKE ad.domain OR 
@@ -40,7 +40,7 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
       badge_type_id: 3,          
       badge_grouping_id: 1,      
       query: sql_query,
-      trigger: 4,                
+      trigger: 8,               
       auto_revoke: true,         
       allow_title: true,         
       system: false              
@@ -48,7 +48,7 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
   end
 
   def down
-    Badge.find_by(name: 'Verified')&.destroy
-    Badge.find_by(name: 'badges.verified.name')&.destroy
+    badge = Badge.find_by(name: 'badges.verified.name') || Badge.find_by(name: 'Verified')
+    badge&.destroy
   end
 end
