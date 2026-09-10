@@ -9,6 +9,11 @@ en:
     localized_badges_partner_domains: "Verified Partner Domains"
     localized_badges_publisher_domains: "Allowed publisher email domains"
     publisher_target_groups: "Select target groups for publishers"
+  admin_settings:
+    localized_badges_publisher_domains: "Publisher Domains (Verified Publisher)"
+    localized_badges_publisher_domains_help: "Users registering with these domains automatically receive the Verified Publisher badge. Works in tandem with the target groups setting below."
+    publisher_target_groups: "Publisher Target Groups"
+    publisher_target_groups_help: "Target groups where verified publisher users will be automatically added, and removed if they change their domain."
   badge_groupings:
     research_fields:
       name: "Research Fields"
