@@ -58,3 +58,4 @@ tr_TR:
     verified_publisher:
       name: "Onaylı Yayıncı"
       description: "Onaylı yayıncı alan adları ile kayıt olan kullanıcılara verilir."
+      long_description: "Bu rozet, yayıncılık statülerini onaylamak amacıyla, doğrulanmış yayıncı partnerlerimizin e-posta domainleriyle kayıt olan üyelere sistem tarafından otomatik olarak atanır. <br><br><b>Not:</b> E-posta adresinin yayıncı olmayan bir domainle değiştirilmesi durumunda, bu rozet ve ilgili yayıncı grup yetkileri otomatik olarak geri alınacaktır."

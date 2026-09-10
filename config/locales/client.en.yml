@@ -46,3 +46,7 @@ en:
         name: "Verified Partner"
         description: "Awarded to verified academic and corporate partners of the BEKCAN Institute."
         long_description: "This badge is assigned to members belonging to organizations that collaborate with the BEKCAN Institute as verified business or academic partners. <br><br><b>Note:</b> If the email address is changed to an unverified domain, this badge will be automatically revoked."
+      verified_publisher:
+        name: "Verified Publisher"
+        description: "Awarded to users registered with verified publisher domains."
+        long_description: "This badge is automatically assigned by the system to members who register with an email domain belonging to our verified publisher partners, acknowledging their publishing status. <br><br><b>Note:</b> If the email address is changed to a non-publisher domain, this badge and associated publishing group privileges will be automatically revoked."
