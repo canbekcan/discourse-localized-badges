@@ -22,7 +22,7 @@ plugins:
     default: ''
     type: list
     list_type: compact
-  publisher_email_domains:
+  localized_badges_publisher_domains:
     default: ''
     type: list
     list_type: compact

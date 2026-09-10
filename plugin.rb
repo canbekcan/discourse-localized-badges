@@ -13,20 +13,21 @@ after_initialize do
   require_relative 'lib/localized_badges/services/assign_sponsor_badges'
   require_relative 'lib/localized_badges/services/assign_publisher_role'
   require_relative 'app/jobs/regular/assign_retroactive_sponsor_badges'
-  require_relative 'app/jobs/regular/evaluate_retroactive_publisher_badges'
+  require_relative 'app/jobs/regular/assign_retroactive_publisher_badges'
 
   # 1. AYAR DEĞİŞİMİ KANCASI: Yeni domain eklendiğinde veya SİLİNDİĞİNDE mevcut kullanıcıları tara
   on(:site_setting_changed) do |setting_name, old_value, new_value|
     
     # Sponsor Rozetleri Taraması
-    sponsor_settings = %i[
+    badge_settings = %i[
       localized_badges_gold_sponsor_domains
       localized_badges_silver_sponsor_domains
       localized_badges_bronze_sponsor_domains
       localized_badges_partner_domains
+      localized_badges_publisher_domains
     ]
 
-    if sponsor_settings.include?(setting_name)
+    if badge_settings.include?(setting_name)
       old_domains = old_value.to_s.split('|').map(&:downcase)
       new_domains = new_value.to_s.split('|').map(&:downcase)
 
@@ -35,19 +36,7 @@ after_initialize do
       
       (added_domains + removed_domains).uniq.each do |domain|
         Jobs.enqueue(:assign_retroactive_sponsor_badges, domain: domain)
-      end
-    end
-
-    # Yayıncı Rozetleri Taraması (Yeni Eklendi)
-    if setting_name == :publisher_email_domains
-      old_domains = old_value.to_s.split('|').map(&:downcase)
-      new_domains = new_value.to_s.split('|').map(&:downcase)
-
-      added_domains = new_domains - old_domains
-      removed_domains = old_domains - new_domains
-      
-      (added_domains + removed_domains).uniq.each do |domain|
-        Jobs.enqueue(:evaluate_retroactive_publisher_badges, domain: domain)
+        Jobs.enqueue(:assign_retroactive_publisher_badges, domain: domain)
       end
     end
   end
@@ -55,13 +44,13 @@ after_initialize do
   # 2. KULLANICI AKTİVASYON KANCASI
   on(:user_activated) do |user|
     LocalizedBadges::Services::AssignSponsorBadges.new(user).call
-    LocalizedBadges::Services::AssignPublisherRole.new(user).call
+    LocalizedBadges::Services::AssignPublisherBadges.new(user).call
   end
 
   # 3. E-POSTA GÜNCELLEME KANCASI
   on(:user_emails_changed) do |user|
     LocalizedBadges::Services::AssignSponsorBadges.new(user).call
-    LocalizedBadges::Services::AssignPublisherRole.new(user).call
+    LocalizedBadges::Services::AssignPublisherBadges.new(user).call
   end
 
   # ====================================================================
@@ -77,6 +66,7 @@ after_initialize do
       
       if user && user.trust_level < TrustLevel[1]
         user.change_trust_level!(TrustLevel[1])
+        # manual_locked_trust_level iptal edildi; kullanıcı doğal olarak TL2/TL3 olabilir.
         Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) Verified rozeti aldigi icin TL1'e terfi ettirildi.")
       end
     end
@@ -94,6 +84,7 @@ after_initialize do
       next if user && user.staff? 
       
       if user && user.trust_level > TrustLevel[0]
+        # Eski kilitleri temizle (geriye dönük güvenlik için) ve seviyeyi düşür
         user.update_column(:manual_locked_trust_level, nil) if user.manual_locked_trust_level.present?
         user.change_trust_level!(TrustLevel[0])
         Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) e-postasini degistirdigi ve rozetini kaybettigi icin TL0'a dusuruldu.")
@@ -106,6 +97,7 @@ after_initialize do
   # ====================================================================
   reloadable_patch do
     
+    # 1. Badge Serializer
     module ::LocalizedBadgeSerializerPatch
       def name
         if object.name.to_s.start_with?('badges.')
@@ -135,6 +127,7 @@ after_initialize do
       prepend ::LocalizedBadgeSerializerPatch
     end
 
+    # 2. Badge Model
     module ::LocalizedBadgeModelPatch
       def display_name
         if name.to_s.start_with?('badges.')
@@ -150,6 +143,7 @@ after_initialize do
       prepend ::LocalizedBadgeModelPatch
     end
 
+    # 3. Badge Grouping
     module ::LocalizedBadgeGroupingSerializerPatch
       def name
         if object.name.to_s.start_with?('badge_groupings.')
@@ -172,10 +166,10 @@ after_initialize do
       extend ActiveSupport::Concern
 
       included do
-        after_commit :check_verified_academic_badge, on: [:create, :update]
+        after_commit :check_verified_badge, on: [:create, :update]
       end
 
-      def check_verified_academic_badge
+      def check_verified_badge
         return unless self.primary?
 
         user = self.user
@@ -206,7 +200,7 @@ after_initialize do
         publisher_badge = Badge.find_by(name: 'badges.verified_publisher.name') || Badge.find_by(name: 'Verified Publisher')
         
         if publisher_badge && user.user_badges.exists?(badge_id: publisher_badge.id)
-          pub_domains = SiteSetting.publisher_email_domains.to_s.split('|').reject(&:blank?).map(&:downcase)
+          pub_domains = SiteSetting.localized_badges_publisher_domains.to_s.split('|').reject(&:blank?).map(&:downcase)
           pub_groups = SiteSetting.publisher_target_groups.to_s.split('|').reject(&:blank?)
           
           is_pub_valid = pub_domains.any? do |pd| 

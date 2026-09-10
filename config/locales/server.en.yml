@@ -7,7 +7,7 @@ en:
     localized_badges_silver_sponsor_domains: "Silver Sponsor Domains"
     localized_badges_bronze_sponsor_domains: "Bronze Sponsor Domains"
     localized_badges_partner_domains: "Verified Partner Domains"
-    publisher_email_domains: "Allowed publisher email domains"
+    localized_badges_publisher_domains: "Allowed publisher email domains"
     publisher_target_groups: "Select target groups for publishers"
   badge_groupings:
     research_fields:

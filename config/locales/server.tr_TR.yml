@@ -7,7 +7,7 @@ tr_TR:
     localized_badges_silver_sponsor_domains: "Gümüş Sponsor Domainleri"
     localized_badges_bronze_sponsor_domains: "Bronz Sponsor Domainleri"
     localized_badges_partner_domains: "Doğrulanmış (Verified) Partner Domainleri"
-    publisher_email_domains: "İzin verilen yayıncı e-posta alan adları"
+    localized_badges_publisher_domains: "İzin verilen yayıncı e-posta alan adları"
     publisher_target_groups: "Yayıncıların otomatik atanacağı grupları seçin"
   badge_groupings:
     research_fields:
