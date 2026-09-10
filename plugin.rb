@@ -15,10 +15,9 @@ after_initialize do
   require_relative 'app/jobs/regular/assign_retroactive_sponsor_badges'
   require_relative 'app/jobs/regular/assign_retroactive_publisher_badges'
 
-  # 1. AYAR DEĞİŞİMİ KANCASI: Yeni domain eklendiğinde veya SİLİNDİĞİNDE mevcut kullanıcıları tara
+  # 1. AYAR DEĞİŞİMİ KANCASI: Domain veya Hedef Gruplar değiştiğinde tara
   on(:site_setting_changed) do |setting_name, old_value, new_value|
     
-    # Sponsor Rozetleri Taraması
     badge_settings = %i[
       localized_badges_gold_sponsor_domains
       localized_badges_silver_sponsor_domains
@@ -37,6 +36,25 @@ after_initialize do
       (added_domains + removed_domains).uniq.each do |domain|
         Jobs.enqueue(:assign_retroactive_sponsor_badges, domain: domain)
         Jobs.enqueue(:assign_retroactive_publisher_badges, domain: domain)
+      end
+    end
+
+    # Yayıncı Hedef Grupları değiştiğinde (örneğin listeden grup silindiğinde) temizlik yap
+    if setting_name == :publisher_target_groups
+      old_groups = old_value.to_s.split('|').reject(&:blank?)
+      new_groups = new_value.to_s.split('|').reject(&:blank?)
+      removed_groups = old_groups - new_groups
+
+      if removed_groups.any?
+        publisher_badge = Badge.find_by(name: 'badges.verified_publisher.name') || Badge.find_by(name: 'Verified Publisher')
+        if publisher_badge
+          User.joins(:user_badges).where(user_badges: { badge_id: publisher_badge.id }).find_each do |user|
+            removed_groups.each do |group_name_or_id|
+              group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
+              group.remove(user) if group && group.users.include?(user)
+            end
+          end
+        end
       end
     end
   end

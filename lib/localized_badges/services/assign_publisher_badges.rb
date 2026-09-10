@@ -11,7 +11,6 @@ module LocalizedBadges
       def call
         return if @domain.blank? || !@user.active?
 
-        # Eşzamanlı işlemlerde veritabanı çakışmalarını önlemek için kilit (lock)
         DistributedMutex.synchronize("assign_publisher_badge_#{@user.id}") do
           ActiveRecord::Base.transaction do
             check_and_manage(
@@ -33,20 +32,18 @@ module LocalizedBadges
         target_groups = groups_setting.to_s.split('|').reject(&:blank?)
         
         if domain_list.include?(@domain)
-          # 1. Rozeti ver
           BadgeGranter.grant(badge, @user)
 
-          # 2. Tanımlı gruplara ekle
           target_groups.each do |group_name_or_id|
             group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
             group.add(@user) if group && !group.users.include?(@user)
           end
         else
-          # 1. Kullanıcıda rozet varsa geri al (revoke)
+          # Rozeti geri al
           user_badge = UserBadge.find_by(user_id: @user.id, badge_id: badge.id)
           BadgeGranter.revoke(user_badge) if user_badge
 
-          # 2. Tanımlı gruplardan çıkar
+          # İlgili tüm hedef gruplardan çıkar (Eksik olan kısım buradaydı)
           target_groups.each do |group_name_or_id|
             group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
             group.remove(@user) if group && group.users.include?(@user)
