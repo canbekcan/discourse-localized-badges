@@ -4,6 +4,8 @@ A Discourse plugin designed to support fully localized badge names and descripti
 
 For more context on the underlying mechanics, refer to the official Discourse Meta discussion: [How can badges and groups be localized?](https://meta.discourse.org/t/how-can-badges-and-groups-be-localized-multilingual/398127)
 
+<img width="1054" height="814" alt="Localized Badges" src="https://github.com/user-attachments/assets/82329669-89d5-4491-b4d7-aa2d022ee3db" />
+
 ## Installation
 
 1. Access your Discourse server via SSH.
@@ -71,9 +73,3 @@ else
 end
 
 ```
-
-## License
-
-MIT
-
-***
