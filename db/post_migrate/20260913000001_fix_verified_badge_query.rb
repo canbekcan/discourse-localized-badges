@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
-class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
+class FixVerifiedBadgeQuery < ActiveRecord::Migration[7.0]
   def up
     badge = Badge.find_by(name: 'Verified') || Badge.find_by(name: 'badges.verified.name')
-    badge ||= Badge.new(name: 'Verified')
+    return unless badge
 
-    # AKADEMİK GÜVENLİK FİLTRESİ EKLELENMİŞ SQL
+    # Düzeltilmiş SQL: user_emails tablosunda "confirmed_at" sütunu yoktur.
+    # Discourse'da bir user_emails satırı zaten doğrulanmış bir e-posta anlamına gelir;
+    # doğrulama durumu email_tokens tablosu üzerinden takip edilir.
+    # Eski sorgu: ... AND ue.confirmed_at IS NOT NULL (hatalı)
+    # Yeni sorgu: Bu koşul tamamen kaldırıldı (gereksiz ve geçersiz).
     sql_query = <<~SQL
       WITH allowed_domains AS (
         SELECT NULLIF(TRIM(unnest(string_to_array(value, '|'))), '') AS domain
@@ -33,22 +37,15 @@ class SeedVerifiedBadge < ActiveRecord::Migration[7.0]
         AND (:backfill OR u.id IN (:user_ids))
     SQL
 
-    badge.update!(
-      name: 'Verified',
-      description: 'badges.verified.description',
-      long_description: 'badges.verified.long_description',
-      badge_type_id: 3,          
-      badge_grouping_id: 1,      
-      query: sql_query,
-      trigger: 8,               
-      auto_revoke: true,         
-      allow_title: true,         
-      system: false              
+    badge.update!(query: sql_query)
+
+    Rails.logger.info(
+      "DevOps [discourse-localized-badges]: Verified rozeti SQL sorgusu duzeltildi. " \
+      "Gecersiz 'ue.confirmed_at' kosulu kaldirildi."
     )
   end
 
   def down
-    badge = Badge.find_by(name: 'badges.verified.name') || Badge.find_by(name: 'Verified')
-    badge&.destroy
+    # Geri alma işlemi gerekmiyor — eski hatalı sorguya dönmek istenilmeyeceği için.
   end
 end

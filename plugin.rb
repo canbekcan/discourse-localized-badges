@@ -1,6 +1,6 @@
 # name: discourse-localized-badges
 # about: Custom badges localisation for Discourse
-# version: 1.4
+# version: 1.5
 # authors: Can Bekcan
 # url: https://github.com/canbekcan/discourse-localized-badges
 
@@ -11,240 +11,84 @@ enabled_site_setting :localized_badges_enabled
 after_initialize do
   next unless SiteSetting.localized_badges_enabled
   require_relative 'lib/localized_badges/services/assign_sponsor_badges'
-  require_relative 'lib/localized_badges/services/assign_publisher_badges'
   require_relative 'app/jobs/regular/assign_retroactive_sponsor_badges'
+  require_relative 'lib/localized_badges/services/assign_publisher_badges'
   require_relative 'app/jobs/regular/assign_retroactive_publisher_badges'
 
-  # 1. AYAR DEĞİŞİMİ KANCASI: Domain veya Hedef Gruplar değiştiğinde tara
+  # 1. AYAR DEĞİŞİMİ KANCASI (Sponsor ve Yayıncılar için)
   on(:site_setting_changed) do |setting_name, old_value, new_value|
-    
-    badge_settings = %i[
-      localized_badges_gold_sponsor_domains
-      localized_badges_silver_sponsor_domains
-      localized_badges_bronze_sponsor_domains
-      localized_badges_partner_domains
-      localized_badges_publisher_domains
-    ]
-
-    if badge_settings.include?(setting_name)
+    if setting_name == :localized_badges_publisher_domains
       old_domains = old_value.to_s.split('|').map(&:downcase)
       new_domains = new_value.to_s.split('|').map(&:downcase)
-
-      added_domains = new_domains - old_domains
-      removed_domains = old_domains - new_domains
-      
-      (added_domains + removed_domains).uniq.each do |domain|
-        Jobs.enqueue(:assign_retroactive_sponsor_badges, domain: domain)
+      (new_domains - old_domains + old_domains - new_domains).uniq.each do |domain|
         Jobs.enqueue(:assign_retroactive_publisher_badges, domain: domain)
       end
     end
-
-    # Yayıncı Hedef Grupları değiştiğinde (örneğin listeden grup silindiğinde) temizlik yap
-    if setting_name == :publisher_target_groups
-      old_groups = old_value.to_s.split('|').reject(&:blank?)
-      new_groups = new_value.to_s.split('|').reject(&:blank?)
-      removed_groups = old_groups - new_groups
-
-      if removed_groups.any?
-        publisher_badge = Badge.find_by(name: 'badges.verified_publisher.name') || Badge.find_by(name: 'Verified Publisher')
-        if publisher_badge
-          User.joins(:user_badges).where(user_badges: { badge_id: publisher_badge.id }).find_each do |user|
-            removed_groups.each do |group_name_or_id|
-              group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
-              group.remove(user) if group && group.users.include?(user)
-            end
-          end
-        end
-      end
-    end
-  end
-
-  # 2. KULLANICI AKTİVASYON KANCASI
-  on(:user_activated) do |user|
-    LocalizedBadges::Services::AssignSponsorBadges.new(user).call
-    LocalizedBadges::Services::AssignPublisherBadges.new(user).call
-  end
-
-  # 3. E-POSTA GÜNCELLEME KANCASI
-  on(:user_emails_changed) do |user|
-    LocalizedBadges::Services::AssignSponsorBadges.new(user).call
-    LocalizedBadges::Services::AssignPublisherBadges.new(user).call
   end
 
   # ====================================================================
-  # OTOMASYON 1: "Verified" rozeti alanları otomatik olarak TL1 yap
-  # ====================================================================
-  DiscourseEvent.on(:user_badge_granted) do |badge_id, user_id|
-    target_badge = Badge.find_by(name: 'badges.verified.name') || Badge.find_by(name: 'Verified')
-    
-    if target_badge && badge_id == target_badge.id
-      user = User.find_by(id: user_id)
-      
-      next if user && user.staff?
-      
-      if user && user.trust_level < TrustLevel[1]
-        user.change_trust_level!(TrustLevel[1])
-        # manual_locked_trust_level iptal edildi; kullanıcı doğal olarak TL2/TL3 olabilir.
-        Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) Verified rozeti aldigi icin TL1'e terfi ettirildi.")
-      end
-    end
-  end
-
-  # ====================================================================
-  # OTOMASYON 2: "Verified" rozeti geri alınanları TL0'a DÜŞÜR
-  # ====================================================================
-  DiscourseEvent.on(:user_badge_revoked) do |badge_id, user_id|
-    target_badge = Badge.find_by(name: 'badges.verified.name') || Badge.find_by(name: 'Verified')
-    
-    if target_badge && badge_id == target_badge.id
-      user = User.find_by(id: user_id)
-      
-      next if user && user.staff? 
-      
-      if user && user.trust_level > TrustLevel[0]
-        # Eski kilitleri temizle (geriye dönük güvenlik için) ve seviyeyi düşür
-        user.update_column(:manual_locked_trust_level, nil) if user.manual_locked_trust_level.present?
-        user.change_trust_level!(TrustLevel[0])
-        Rails.logger.info("DevOps [discourse-localized-badges]: Kullanici (ID: #{user.id}) e-postasini degistirdigi ve rozetini kaybettigi icin TL0'a dusuruldu.")
-      end
-    end
-  end
-
-  # ====================================================================
-  # YAMALAR (PATCHES): Çeviri, Serileştirme ve ANLIK E-POSTA KONTROLÜ
+  # YAYINCI OTOMASYONU: Doğrudan Model Seviyesinde Takip (Asla Kaçmaz)
   # ====================================================================
   reloadable_patch do
-    
-    # 1. Badge Serializer
-    module ::LocalizedBadgeSerializerPatch
-      def name
-        if object.name.to_s.start_with?('badges.')
-          I18n.t(object.name)
-        else
-          defined?(super) ? super : object.name
-        end
-      end
-      def description
-        if object.description.to_s.start_with?('badges.')
-          I18n.t(object.description)
-        else
-          defined?(super) ? super : object.description
-        end
-      end
-      def long_description
-        if object.long_description.to_s.start_with?('badges.')
-          I18n.t(object.long_description)
-        else
-          defined?(super) ? super : object.long_description
-        end
-      end
-    end
-
-    require_dependency 'badge_serializer'
-    class ::BadgeSerializer
-      prepend ::LocalizedBadgeSerializerPatch
-    end
-
-    # 2. Badge Model
-    module ::LocalizedBadgeModelPatch
-      def display_name
-        if name.to_s.start_with?('badges.')
-          I18n.t(name)
-        else
-          defined?(super) ? super : name
-        end
-      end
-    end
-
-    require_dependency 'badge'
-    class ::Badge
-      prepend ::LocalizedBadgeModelPatch
-    end
-
-    # 3. Badge Grouping
-    module ::LocalizedBadgeGroupingSerializerPatch
-      def name
-        if object.name.to_s.start_with?('badge_groupings.')
-          I18n.t(object.name)
-        else
-          defined?(super) ? super : object.name
-        end
-      end
-    end
-
-    require_dependency 'badge_grouping_serializer'
-    class ::BadgeGroupingSerializer
-      prepend ::LocalizedBadgeGroupingSerializerPatch
-    end
-
-    # ====================================================================
-    # 4. ANINDA E-POSTA DEĞİŞİMİ YAKALAYICI (INSTANT REVOKE)
-    # ====================================================================
-    module ::LocalizedUserEmailPatch
+    module ::LocalizedPublisherUserPatch
       extend ActiveSupport::Concern
 
       included do
-        after_commit :check_verified_badge, on: [:create, :update]
+        after_commit :check_and_assign_publisher_role, on: [:create, :update]
       end
 
-      def check_verified_badge
-        return unless self.primary?
+      def check_and_assign_publisher_role
+        return if self.staff?
 
-        user = self.user
-        return if user.nil? || user.staff?
+        # Kullanıcının birincil e-postasını al
+        primary_email_record = self.user_emails.find_by(primary: true)
+        return unless primary_email_record.present?
 
-        domain = self.email.to_s.split('@').last.to_s.downcase
+        user_email = primary_email_record.email.to_s.downcase
+        domain = user_email.split('@').last.to_s
 
-        # VERIFIED ROZETİ KONTROLÜ (ORİJİNAL)
-        target_badge = Badge.find_by(name: 'Verified')
+        pub_domains = SiteSetting.localized_badges_publisher_domains.to_s.split('|').reject(&:blank?).map(&:downcase)
+        pub_groups = SiteSetting.publisher_target_groups.to_s.split('|').reject(&:blank?)
         
-        if target_badge && user.user_badges.exists?(badge_id: target_badge.id)
-          allowed_domains = SiteSetting.verified_academic_domains.to_s.split('|').reject(&:blank?).map(&:downcase)
-          
-          is_valid = allowed_domains.any? do |ad|
-            domain == ad || domain.end_with?(".#{ad}")
-          end
+        is_valid = pub_domains.any? { |pd| domain == pd || domain.end_with?(".#{pd}") }
+        publisher_badge = Badge.find_by(name: 'badges.verified_publisher.name') || Badge.find_by(name: 'Verified Publisher')
 
-          unless is_valid
-            user_badge = UserBadge.find_by(user_id: user.id, badge_id: target_badge.id)
-            if user_badge
-              BadgeGranter.revoke(user_badge)
-              Rails.logger.info("DevOps [discourse-localized-badges]: #{user.username} e-postasini #{self.email} yapti. Kurumsal olmadigi icin rozeti ANINDA iptal edildi.")
+        Rails.logger.info("DevOps [Publisher Check]: Kullanici #{self.username} (#{user_email}) kontrol ediliyor. Gecerli mi? #{is_valid}")
+
+        if is_valid
+          # 1. Gruplara Ekle
+          pub_groups.each do |group_name_or_id|
+            group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
+            if group && !group.users.include?(self)
+              group.add(self)
+              Rails.logger.info("DevOps [Publisher Check]: #{self.username} yayinci grubuna eklendi: #{group.name}")
             end
           end
-        end
 
-        # YAYINCI ROZETİ VE GRUP KONTROLÜ
-        publisher_badge = Badge.find_by(name: 'badges.verified_publisher.name') || Badge.find_by(name: 'Verified Publisher')
-        
-        if publisher_badge && user.user_badges.exists?(badge_id: publisher_badge.id)
-          pub_domains = SiteSetting.localized_badges_publisher_domains.to_s.split('|').reject(&:blank?).map(&:downcase)
-          pub_groups = SiteSetting.publisher_target_groups.to_s.split('|').reject(&:blank?)
-          
-          is_pub_valid = pub_domains.any? do |pd| 
-            domain == pd || domain.end_with?(".#{pd}") 
+          # 2. Rozet Ver
+          if publisher_badge && !self.user_badges.exists?(badge_id: publisher_badge.id)
+            BadgeGranter.grant(publisher_badge, self)
+            Rails.logger.info("DevOps [Publisher Check]: #{self.username} kullanicisina yayinci rozeti verildi.")
           end
-
-          unless is_pub_valid
-            pub_user_badge = UserBadge.find_by(user_id: user.id, badge_id: publisher_badge.id)
-            BadgeGranter.revoke(pub_user_badge) if pub_user_badge
+        else
+          # Listeden çıktıysa veya uymuyorsa geri al
+          if publisher_badge && self.user_badges.exists?(badge_id: publisher_badge.id)
+            user_badge = UserBadge.find_by(user_id: self.id, badge_id: publisher_badge.id)
+            BadgeGranter.revoke(user_badge) if user_badge
             
             pub_groups.each do |group_name_or_id|
               group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
-              group.remove(user) if group && group.users.include?(user)
+              group.remove(self) if group && group.users.include?(self)
             end
-            
-            Rails.logger.info("DevOps [discourse-localized-badges]: #{user.username} e-postasini degistirdi. Yayinici gruplarindan ve rozetinden ANINDA cikarildi.")
+            Rails.logger.info("DevOps [Publisher Check]: #{self.username} yayinci yetkileri ve rozeti geri alindi.")
           end
         end
-
       end
     end
 
-    require_dependency 'user_email'
-    class ::UserEmail
-      include ::LocalizedUserEmailPatch
+    require_dependency 'user'
+    class ::User
+      include ::LocalizedPublisherUserPatch
     end
-
   end
 end

@@ -3,7 +3,7 @@
 class SeedVerifiedPublisherBadge < ActiveRecord::Migration[7.0]
   def up
     badges = [
-      { name: 'Verified Publisher', icon: 'book' }
+      { name: 'Verified Publisher', icon: 'book', key: 'verified_publisher' }
     ]
 
     badges.each do |b|
