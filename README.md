@@ -18,7 +18,7 @@ hooks:
     - exec:
         cd: $home/plugins
         cmd:
-          - git clone [https://github.com/canbekcan/discourse-localized-badges.git](https://github.com/canbekcan/discourse-localized-badges.git)
+          - git clone https://github.com/canbekcan/discourse-localized-badges.git
 
 ```
 
