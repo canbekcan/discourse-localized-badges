@@ -9,44 +9,49 @@ module LocalizedBadges
       end
 
       def call
-        return if @domain.blank? || !@user.active?
+        if @domain.blank?
+          Rails.logger.debug("DevOps [AssignPublisherBadges]: Kullanici #{@user.id} icin domain bos, atlanıyor.")
+          return
+        end
+
+        unless @user.active?
+          Rails.logger.debug("DevOps [AssignPublisherBadges]: Kullanici #{@user.id} aktif degil, atlaniyor.")
+          return
+        end
 
         DistributedMutex.synchronize("assign_publisher_badge_#{@user.id}") do
           ActiveRecord::Base.transaction do
-            check_and_manage(
-              'Verified Publisher', 
-              SiteSetting.localized_badges_publisher_domains, 
-              SiteSetting.publisher_target_groups
-            )
-          end
-        end
-      end
+            badge = Badge.find_by(name: 'badges.verified_publisher.name') ||
+                    Badge.find_by(name: 'Verified Publisher')
 
-      private
+            unless badge
+              Rails.logger.warn("DevOps [AssignPublisherBadges]: 'Verified Publisher' rozeti veritabaninda bulunamadi! Migrasyon calistirilmis mi kontrol edin.")
+              return
+            end
 
-      def check_and_manage(badge_name, domains_setting, groups_setting)
-        badge = Badge.find_by(name: badge_name)
-        return unless badge
+            domain_list = SiteSetting.localized_badges_publisher_domains.to_s.split('|').reject(&:blank?).map(&:downcase)
+            target_groups = SiteSetting.publisher_target_groups.to_s.split('|').reject(&:blank?)
 
-        domain_list = domains_setting.to_s.split('|').reject(&:blank?).map(&:downcase)
-        target_groups = groups_setting.to_s.split('|').reject(&:blank?)
-        
-        if domain_list.include?(@domain)
-          BadgeGranter.grant(badge, @user)
+            if domain_list.include?(@domain)
+              BadgeGranter.grant(badge, @user)
+              Rails.logger.info("DevOps [AssignPublisherBadges]: #{@user.username} (#{@user.email}) kullanicisina Verified Publisher rozeti verildi.")
 
-          target_groups.each do |group_name_or_id|
-            group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
-            group.add(@user) if group && !group.users.include?(@user)
-          end
-        else
-          # Rozeti geri al
-          user_badge = UserBadge.find_by(user_id: @user.id, badge_id: badge.id)
-          BadgeGranter.revoke(user_badge) if user_badge
+              target_groups.each do |group_name_or_id|
+                group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
+                group.add(@user) if group && !group.users.include?(@user)
+              end
+            else
+              user_badge = UserBadge.find_by(user_id: @user.id, badge_id: badge.id)
+              if user_badge
+                BadgeGranter.revoke(user_badge)
+                Rails.logger.info("DevOps [AssignPublisherBadges]: #{@user.username} (#{@user.email}) kullanicisinin Verified Publisher rozeti geri alindi.")
+              end
 
-          # İlgili tüm hedef gruplardan çıkar (Eksik olan kısım buradaydı)
-          target_groups.each do |group_name_or_id|
-            group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
-            group.remove(@user) if group && group.users.include?(@user)
+              target_groups.each do |group_name_or_id|
+                group = Group.find_by(name: group_name_or_id) || Group.find_by(id: group_name_or_id)
+                group.remove(@user) if group && group.users.include?(@user)
+              end
+            end
           end
         end
       end
