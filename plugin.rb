@@ -15,6 +15,7 @@ after_initialize do
   require_relative 'app/jobs/regular/assign_retroactive_sponsor_badges'
   require_relative 'app/jobs/regular/assign_retroactive_publisher_badges'
   require_relative 'app/jobs/regular/backfill_verified_badge'
+  require_relative 'app/jobs/regular/evaluate_retroactive_publisher_badges'
 
   # ====================================================================
   # 1. AYAR DEĞİŞİMİ KANCASI
